@@ -1,4 +1,4 @@
-# Nous deux (version gratuite, sans compte Apple Developer)
+# Nous deux
 
 ## 1. Firebase (5 min, une seule fois)
 1. Console Firebase > projet nousdeux > ⚙️ Paramètres du projet > « Vos applications » > **Ajouter une application > Web (</>)**. Nom : nousdeux-web. Ignore l'hébergement.
