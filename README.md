@@ -11,13 +11,13 @@
 2. Settings > Pages > Branch `main` / root > Save. Le lien est `https://TON-PSEUDO.github.io/nousdeux/` (1 à 2 min).
 3. Si l'app affiche « auth/unauthorized-domain » : Firebase > Authentication > Paramètres > Domaines autorisés > ajoute `TON-PSEUDO.github.io`.
 
-## 3. Installer sur les iPhone (toi et Emy)
-Ouvrir le lien dans **Safari** > Partager > **Sur l'écran d'accueil**. Noah choisit « Noah » > Créer notre espace, Emy choisit « Emy » > entre le code.
+## 3. Installer sur les iPhone (toi et Ally)
+Ouvrir le lien dans **Safari** > Partager > **Sur l'écran d'accueil**. Chacun choisit « Noah » ou « Ally », entre le prénom à afficher dans l'espace privé, puis crée l'espace ou rejoint avec le code de l'autre.
 
 ## 4. Rappel de 16h
 Raccourcis > Automatisation > + > **Heure du jour** 16:00, tous les jours > **Exécuter immédiatement** > action **Ouvrir les URL** avec le lien de l'app. (Alternative : un rappel quotidien à 16h dans l'app Rappels, avec le lien en URL.)
 
 ## 5. Widget d'écran verrouillé
-1. Installe **Scriptable** (App Store, gratuit). Nouveau script > colle `scriptable-widget.js`, remplis API_KEY, CODE et ME.
+1. Installe **Scriptable** (App Store, gratuit). Nouveau script > colle `scriptable-widget.js`, remplis API_KEY, CODE et ME (« Noah » ou « Ally »).
 2. Écran verrouillé > appui long > Personnaliser > Écran verrouillé > ajoute un widget **Scriptable** (rectangulaire ou en ligne) > touche-le > Script : celui-ci.
 3. iOS le rafraîchit environ toutes les 15 à 30 min : ce n'est pas instantané.

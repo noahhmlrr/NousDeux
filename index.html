@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Nous deux">
 <meta name="theme-color" content="#fbf3f6">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>Nous deux 💛</title>
+<title>Nous deux ❤️</title>
 <style>
 :root{
   --bg:#fbf3f6; --card:#ffffff; --ink:#2a1d33; --muted:#85748f; --line:#ecdde5;
@@ -69,11 +69,14 @@ nav span{font-size:1.4rem}
   <p class="muted">Un petit coin à vous, pour vous dire les choses doucement.</p>
   <div class="seg" id="who" role="group" aria-label="Je suis">
     <button data-p="Noah" aria-pressed="true">Je suis Noah</button>
-    <button data-p="Emy" aria-pressed="false">Je suis Emy</button>
+    <button data-p="Ally" aria-pressed="false">Je suis Ally</button>
   </div>
+  <label for="privateName" class="muted">Ton prénom dans votre espace privé</label>
+  <input type="text" id="privateName" placeholder="Le prénom que tu veux afficher" maxlength="32" autocomplete="given-name">
+  <p class="muted" id="spaceHint" style="font-size:.9rem">Ce prénom sera visible dans la conversation associée à votre code.</p>
   <button class="primary" id="create" style="width:100%">Créer notre espace</button>
-  <p class="muted" style="font-size:.9rem">Un code s’affichera : donne-le à l’autre personne.</p>
-  <h2>Ou rejoindre avec un code</h2>
+  <p class="muted" id="createHint" style="font-size:.9rem">Un code s’affichera : donne-le à l’autre personne.</p>
+  <h2 id="joinHeading">Ou rejoindre avec un code</h2>
   <input type="text" id="joinCode" placeholder="Code à 6 caractères" autocapitalize="characters" autocomplete="off" maxlength="6">
   <button id="join" style="width:100%;margin-top:8px">Rejoindre</button>
   <p class="err" id="obErr"></p>
@@ -120,7 +123,7 @@ nav span{font-size:1.4rem}
   </section>
 
   <nav>
-    <button data-tab="home" aria-current="page"><span>💛</span>Nous</button>
+    <button data-tab="home" aria-current="page"><span>❤️</span>Nous</button>
     <button data-tab="write"><span>✍️</span>Écrire</button>
     <button data-tab="mood"><span>🙂</span>Humeur</button>
   </nav>
@@ -144,7 +147,8 @@ const firebaseConfig = {
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const PERSONS = { Noah: { il: "il", partner: "Emy" }, Emy: { il: "elle", partner: "Noah" } };
+const PERSONS = { Noah: { il: "il", partner: "Ally" }, Ally: { il: "elle", partner: "Noah" } };
+const normalizePerson = person => person === "Emy" ? "Ally" : person;
 const MOODS = [
   ["😊","heureux","heureuse"],["😌","serein","sereine"],["🥱","fatigué","fatiguée"],
   ["😟","stressé","stressée"],["😢","triste","triste"],["🥺","en manque de toi","en manque de toi"]
@@ -155,20 +159,21 @@ const IDEAS = ["Date FaceTime 📱","Plato 🎲","Questions-réponses 💬","Fil
 const BANNED = ["connard","connasse","con","conne","salope","pute","putain","merde","debile","idiot","idiote",
   "imbecile","stupide","abruti","abrutie","cretin","cretine","encule","fdp","ntm","batard","bouffon",
   "ta gueule","ferme ta gueule","degage","je te hais","tg","pd","chiante","chiant"];
-const HINT = "Reformule avec douceur 💛 (pas d’insultes ni de mots blessants)";
+const HINT = "Reformule avec douceur ❤️ (pas d’insultes ni de mots blessants)";
 const gentle = s => {
   const words = s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().split(/[^a-z]+/).filter(Boolean);
   const n = " " + words.join(" ") + " ";
   return !BANNED.some(b => n.includes(" " + b + " "));
 };
 
-let me = localStorage.getItem("me"), code = localStorage.getItem("code");
-let events = [], unsub = null, db = null, tab = "home", kind = "wish", mood = null, pick = "Noah";
+let me = normalizePerson(localStorage.getItem("me")), code = localStorage.getItem("code");
+let displayName = "", coupleNames = {};
+let events = [], unsub = null, unsubCouple = null, db = null, tab = "home", kind = "wish", mood = null, pick = me || "Noah";
 
 function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2200); }
 
 function body(e){
-  const il = PERSONS[e.from]?.il ?? "il";
+  const il = PERSONS[normalizePerson(e.from)]?.il ?? "il";
   const q = e.text ? ` : « ${e.text} »` : "";
   switch(e.kind){
     case "wish": return `aimerait${q}`;
@@ -189,6 +194,18 @@ async function start(){
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
   await signInAnonymously(getAuth(app));
+  const coupleRef = doc(db,"couples",code);
+  try {
+    await setDoc(coupleRef, { names: { [me]: displayName } }, { merge:true });
+  } catch(e) {
+    toast("Impossible d’enregistrer le prénom : " + e.code);
+  }
+  unsubCouple?.();
+  unsubCouple = onSnapshot(coupleRef, snap => {
+    coupleNames = snap.data()?.names ?? {};
+    updateTitle();
+    renderFeed();
+  }, err => toast("Lecture des prénoms impossible : " + err.code));
   unsub?.();
   unsub = onSnapshot(
     query(collection(db,"couples",code,"events"), orderBy("createdAt","desc"), limit(50)),
@@ -202,7 +219,7 @@ async function start(){
 
 async function send(k, text = "", extra = null){
   await addDoc(collection(db,"couples",code,"events"), {
-    from: me, kind: k, text, extra, status: k === "dateProposal" ? "pending" : "info", createdAt: serverTimestamp()
+    from: me, fromName: displayName, kind: k, text, extra, status: k === "dateProposal" ? "pending" : "info", createdAt: serverTimestamp()
   });
 }
 const respond = (id, accept) => updateDoc(doc(db,"couples",code,"events",id), { status: accept ? "accepted" : "declined" });
@@ -210,12 +227,17 @@ const respond = (id, accept) => updateDoc(doc(db,"couples",code,"events",id), { 
 /* ---------- Écrans ---------- */
 function showApp(){
   $("#onboarding").hidden = true; $("#app").hidden = false;
-  $("#title").textContent = `${me} 💛 ${PERSONS[me].partner}`;
+  updateTitle();
   $("#codeInfo").textContent = `Code de votre espace : ${code}`;
   $("#ideas").innerHTML = IDEAS.map(i => `<button data-idea="${esc(i)}">${esc(i)}</button>`).join("");
   $("#moods").innerHTML = MOODS.map((m,i) => `<button data-mood="${i}" aria-pressed="false"><span>${m[0]}</span>${esc(me==="Noah"?m[1]:m[2])}</button>`).join("");
   setTab("home"); setKind("wish");
   start();
+}
+
+function updateTitle(){
+  const partner = PERSONS[me].partner;
+  $("#title").textContent = `${displayName} ❤️ ${coupleNames[partner] || partner}`;
 }
 
 function setTab(t){
@@ -246,19 +268,19 @@ function renderFeed(){
   const today = new Date().toDateString();
   const t = events.find(e => e.kind==="dateProposal" && e.status==="accepted" && e.at.toDateString()===today);
   $("#tonight").innerHTML = t
-    ? `<div class="tonight">Rendez-vous ce soir avec ${esc(t.from===me ? PERSONS[me].partner : t.from)} pour ${esc(t.extra)}</div>` : "";
-  const lastMood = events.find(e => e.kind==="mood" && e.from!==me);
+    ? `<div class="tonight">Rendez-vous ce soir avec ${esc(normalizePerson(t.from)===me ? coupleNames[PERSONS[me].partner] || PERSONS[me].partner : t.fromName || t.from)} pour ${esc(t.extra)}</div>` : "";
+  const lastMood = events.find(e => e.kind==="mood" && normalizePerson(e.from)!==me);
   $("#feed").innerHTML = events.length ? events.map(e => {
-    const mine = e.from === me;
+    const mine = normalizePerson(e.from) === me;
     let extra = "";
     if (e.kind === "dateProposal") {
-      if (e.status === "pending" && !mine) extra = `<div class="actions"><button class="primary" data-act="yes" data-id="${e.id}">Accepter 💛</button><button data-act="no" data-id="${e.id}">Pas ce soir</button></div>`;
+      if (e.status === "pending" && !mine) extra = `<div class="actions"><button class="primary" data-act="yes" data-id="${e.id}">Accepter ❤️</button><button data-act="no" data-id="${e.id}">Pas ce soir</button></div>`;
       else if (e.status === "pending") extra = `<div class="state muted">En attente de réponse…</div>`;
       else if (e.status === "accepted") extra = `<div class="state ok">Accepté ✅</div>`;
-      else extra = `<div class="state muted">Pas pour ce soir, une autre fois 💛</div>`;
+      else extra = `<div class="state muted">Pas pour ce soir, une autre fois ❤️</div>`;
     }
     if (lastMood && e.id === lastMood.id && CARE.includes(e.extra)) extra += `<div class="actions"><button data-act="date">Proposer un date ce soir ?</button></div>`;
-    const who = mine ? "Toi" : esc(e.from);
+    const who = mine ? "Toi" : esc(e.fromName || coupleNames[normalizePerson(e.from)] || e.from);
     return `<div class="item ${mine?"mine":""}"><div class="who">${who} · ${e.at.toLocaleString("fr-FR",{weekday:"short",hour:"2-digit",minute:"2-digit"})}</div>
       <div class="msg">${esc(mine ? mine_body(e) : body(e))}</div>${extra}</div>`;
   }).join("") : `<p class="muted">Rien pour l’instant. Envoie un bouquet pour commencer 💐</p>`;
@@ -268,18 +290,32 @@ function renderFeed(){
 $("#who").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; pick = b.dataset.p;
   document.querySelectorAll("#who button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  $("#privateName").value = localStorage.getItem("displayName:" + pick) || "";
 });
-function enter(c){ me = pick; code = c.toUpperCase(); localStorage.setItem("me", me); localStorage.setItem("code", code); showApp(); }
+function enter(c, name){
+  me = pick; displayName = name; code = c.toUpperCase();
+  localStorage.setItem("me", me); localStorage.setItem("code", code);
+  localStorage.setItem("displayName:" + me, displayName);
+  showApp();
+}
+function getPrivateName(){
+  const name = $("#privateName").value.trim();
+  if (!name) { $("#obErr").textContent = "Entre le prénom à afficher dans votre espace privé."; return ""; }
+  $("#obErr").textContent = "";
+  return name;
+}
 $("#create").onclick = async () => {
+  const name = getPrivateName(); if (!name) return;
+  if (me && code) { enter(code, name); return; }
   const L = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let c = "";
   for (let i=0;i<6;i++) c += L[Math.floor(Math.random()*L.length)];
-  enter(c);
-  if (db) { try { await setDoc(doc(db,"couples",c), { created: serverTimestamp() }, { merge:true }); } catch(e){} }
+  enter(c, name);
 };
 $("#join").onclick = () => {
+  const name = getPrivateName(); if (!name) return;
   const c = $("#joinCode").value.trim();
   if (c.length !== 6) { $("#obErr").textContent = "Le code a 6 caractères."; return; }
-  enter(c);
+  enter(c, name);
 };
 document.querySelector("nav").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setTab(b.dataset.tab); });
 $("#b-bouquet").onclick = async () => { try { await send("bouquet"); toast("Bouquet envoyé 💐"); } catch(e){ toast("Envoi impossible"); } };
@@ -304,7 +340,7 @@ $("#sendWrite").onclick = async () => {
   const t = $("#writeText").value.trim(); if (!t) return;
   if (!gentle(t)) { $("#writeErr").textContent = HINT; return; }
   $("#writeErr").textContent = "";
-  try { await send(kind, t); $("#writeText").value = ""; toast("Envoyé 💛"); setTab("home"); } catch(x){ toast("Envoi impossible"); }
+  try { await send(kind, t); $("#writeText").value = ""; toast("Envoyé ❤️"); setTab("home"); } catch(x){ toast("Envoi impossible"); }
 };
 $("#moods").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; mood = Number(b.dataset.mood);
@@ -319,11 +355,26 @@ $("#sendMood").onclick = async () => {
   const m = MOODS[mood];
   try { await send("mood", t, me === "Noah" ? m[1] : m[2]); $("#moodText").value = ""; mood = null;
     document.querySelectorAll("#moods button").forEach(x => x.setAttribute("aria-pressed","false"));
-    $("#sendMood").disabled = true; toast("Envoyé 💛"); setTab("home"); } catch(x){ toast("Envoi impossible"); }
+    $("#sendMood").disabled = true; toast("Envoyé ❤️"); setTab("home"); } catch(x){ toast("Envoi impossible"); }
 };
 
 /* ---------- Démarrage ---------- */
-if (me && code) showApp(); else $("#onboarding").hidden = false;
+if (me && code && localStorage.getItem("displayName:" + me)) {
+  displayName = localStorage.getItem("displayName:" + me);
+  showApp();
+} else {
+  $("#onboarding").hidden = false;
+  document.querySelectorAll("#who button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === pick));
+  $("#privateName").value = localStorage.getItem("displayName:" + pick) || "";
+  if (me && code) {
+    $("#create").textContent = "Continuer avec mon espace";
+    $("#createHint").textContent = "Ton prénom sera ajouté à la conversation de cet espace.";
+    document.querySelectorAll("#who button").forEach(b => b.disabled = true);
+    $("#joinHeading").hidden = true;
+    $("#joinCode").hidden = true;
+    $("#join").hidden = true;
+  }
+}
 </script>
 </body>
 </html>

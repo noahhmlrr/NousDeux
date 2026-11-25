@@ -4,7 +4,9 @@
 const API_KEY = "AIzaSyDV4-fHCK5RWR9lUcqwpmibo2n6A9OWCGo";      // même apiKey que dans index.html
 const PROJECT_ID = "nousdeux-7915c";
 const CODE = "XXXXXX";                    // code de votre espace
-const ME = "Noah";                        // "Noah" ou "Emy" (toi)
+const ME = "Noah";                        // "Noah" ou "Ally" (toi)
+
+const normalizePerson = person => person === "Emy" ? "Ally" : person;
 
 async function getToken() {
   if (Keychain.contains("nd_refresh")) {
@@ -38,15 +40,15 @@ async function latestFromPartner(token) {
   for (const row of rows) {
     const f = row.document && row.document.fields;
     if (!f) continue;
-    const e = { from: f.from?.stringValue, kind: f.kind?.stringValue,
+    const e = { from: f.from?.stringValue, fromName: f.fromName?.stringValue, kind: f.kind?.stringValue,
                 text: f.text?.stringValue || "", extra: f.extra?.stringValue || "" };
-    if (e.from && e.from !== ME) return e;
+    if (e.from && normalizePerson(e.from) !== ME) return e;
   }
   return null;
 }
 
 function body(e) {
-  const il = e.from === "Emy" ? "elle" : "il";
+  const il = normalizePerson(e.from) === "Ally" ? "elle" : "il";
   const q = e.text ? ` : « ${e.text} »` : "";
   switch (e.kind) {
     case "wish": return `aimerait${q}`;
@@ -60,7 +62,7 @@ function body(e) {
 
 let e = null;
 try { e = await latestFromPartner(await getToken()); } catch (err) {}
-const title = e ? e.from : "Nous deux 💛";
+const title = e ? e.fromName || normalizePerson(e.from) : "Nous deux ❤️";
 const msg = e ? body(e) : "Pas encore de message";
 
 const w = new ListWidget();
@@ -68,13 +70,13 @@ w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
 const fam = config.widgetFamily;
 
 if (fam === "accessoryInline") {
-  w.addText(`💛 ${title} ${msg}`);
+  w.addText(`❤️ ${title} ${msg}`);
 } else if (fam === "accessoryRectangular") {
   const t = w.addText(title); t.font = Font.boldSystemFont(12);
   const m = w.addText(msg); m.font = Font.systemFont(11); m.lineLimit = 3;
 } else {
   w.backgroundColor = new Color("#fbf3f6");
-  const t = w.addText(`💛 ${title}`); t.font = Font.boldSystemFont(15); t.textColor = new Color("#d6336c");
+  const t = w.addText(`❤️ ${title}`); t.font = Font.boldSystemFont(15); t.textColor = new Color("#d6336c");
   w.addSpacer(6);
   const m = w.addText(msg); m.font = Font.systemFont(14); m.textColor = new Color("#2a1d33");
 }
