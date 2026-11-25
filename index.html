@@ -312,10 +312,13 @@ async function start(){
 
 async function send(k, text = "", extra = null){
   await addDoc(collection(db,"couples",code,"events"), {
-    from: me, fromName: displayName, kind: k, text, extra, status: k === "dateProposal" ? "pending" : "info", createdAt: serverTimestamp()
+    from: me, fromName: displayName, kind: k, text, extra, status: k === "dateProposal" ? "pending" : "info",
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp()
   });
 }
-const respond = (id, accept) => updateDoc(doc(db,"couples",code,"events",id), { status: accept ? "accepted" : "declined" });
+const respond = (id, accept) => updateDoc(doc(db,"couples",code,"events",id), {
+  status: accept ? "accepted" : "declined", updatedAt: serverTimestamp()
+});
 
 /* ---------- Écrans ---------- */
 function showApp(){

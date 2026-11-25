@@ -68,12 +68,15 @@ const msg = e ? body(e) : "Pas encore de message";
 const w = new ListWidget();
 w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
 const fam = config.widgetFamily;
+if (fam?.startsWith("accessory")) w.addAccessoryWidgetBackground();
 
 if (fam === "accessoryInline") {
   w.addText(`❤️ ${title} ${msg}`);
 } else if (fam === "accessoryRectangular") {
   const t = w.addText(title); t.font = Font.boldSystemFont(12);
   const m = w.addText(msg); m.font = Font.systemFont(11); m.lineLimit = 3;
+} else if (fam === "accessoryCircular") {
+  const t = w.addText(e ? "❤️" : "💬"); t.font = Font.systemFont(22); t.centerAlignText();
 } else {
   w.backgroundColor = new Color("#fbf3f6");
   const t = w.addText(`❤️ ${title}`); t.font = Font.boldSystemFont(15); t.textColor = new Color("#d6336c");
