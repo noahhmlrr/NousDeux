@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Nous deux">
+<meta name="theme-color" content="#fbf3f6">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Nous deux 💛</title>
+<style>
+:root{
+  --bg:#fbf3f6; --card:#ffffff; --ink:#2a1d33; --muted:#85748f; --line:#ecdde5;
+  --accent:#d6336c; --accent-ink:#ffffff; --soft:#f6dde7; --ok:#2f7d5b; --err:#c0392b;
+  --ui:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,sans-serif;
+  --note:ui-serif,"New York",Georgia,serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1322; --card:#2a1d33; --ink:#f6e9ef; --muted:#aa97b4; --line:#3d2c48;
+    --accent:#f06595; --accent-ink:#2a1d33; --soft:#43294a; --ok:#6fcf9d; --err:#ff8a7a;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+body{padding:env(safe-area-inset-top) 0 0}
+main,#onboarding{max-width:560px;margin:0 auto;padding:18px 18px 110px}
+h1{font-family:var(--note);font-weight:600;font-size:1.7rem;margin:6px 0 16px;letter-spacing:-.01em}
+h2{font-size:1rem;margin:26px 0 10px;color:var(--muted);font-weight:600}
+button,input,textarea{font:inherit;color:inherit}
+button{border:0;border-radius:14px;padding:12px 16px;background:var(--soft);cursor:pointer;min-height:44px}
+button.primary{background:var(--accent);color:var(--accent-ink);font-weight:600}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+textarea,input[type=text]{width:100%;border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:12px;resize:vertical}
+textarea{min-height:120px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>button{flex:1 1 150px}
+.tonight{background:var(--accent);color:var(--accent-ink);border-radius:20px;padding:18px;margin-bottom:16px;font-family:var(--note);font-size:1.25rem}
+.item{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-bottom:10px}
+.item.mine{background:transparent;border-style:dashed}
+.item .who{font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.item .msg{font-family:var(--note);font-size:1.1rem}
+.item .state{font-size:.9rem;margin-top:8px}.ok{color:var(--ok)}.muted{color:var(--muted)}
+.item .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.seg{display:flex;background:var(--soft);border-radius:14px;padding:4px;margin-bottom:12px}
+.seg button{flex:1;background:transparent}.seg button[aria-pressed=true]{background:var(--card);font-weight:600}
+.moods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.moods button{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card);border:1.5px solid var(--line);padding:10px 4px;font-size:.85rem}
+.moods button span{font-size:1.8rem}.moods button[aria-pressed=true]{border-color:var(--accent);background:var(--soft)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0}
+.panel button{display:block;width:100%;text-align:left;margin-bottom:6px}
+.err{color:var(--err);font-size:.9rem;margin:6px 0 0}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:6px;background:var(--bg);border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
+nav button{flex:1;max-width:180px;background:transparent;font-size:.85rem;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px}
+nav button[aria-current=page]{color:var(--accent);font-weight:700}
+nav span{font-size:1.4rem}
+#toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
+.code{font-size:.85rem;color:var(--muted);margin-top:24px}
+.notice{background:var(--soft);border-radius:14px;padding:12px;margin:12px 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<section id="onboarding" hidden>
+  <h1>Nous deux 💛</h1>
+  <p class="muted">Un petit coin à vous, pour vous dire les choses doucement.</p>
+  <div class="seg" id="who" role="group" aria-label="Je suis">
+    <button data-p="Noah" aria-pressed="true">Je suis Noah</button>
+    <button data-p="Emy" aria-pressed="false">Je suis Emy</button>
+  </div>
+  <button class="primary" id="create" style="width:100%">Créer notre espace</button>
+  <p class="muted" style="font-size:.9rem">Un code s’affichera : donne-le à l’autre personne.</p>
+  <h2>Ou rejoindre avec un code</h2>
+  <input type="text" id="joinCode" placeholder="Code à 6 caractères" autocapitalize="characters" autocomplete="off" maxlength="6">
+  <button id="join" style="width:100%;margin-top:8px">Rejoindre</button>
+  <p class="err" id="obErr"></p>
+</section>
+
+<main id="app" hidden>
+  <h1 id="title"></h1>
+
+  <section id="v-home">
+    <div id="tonight"></div>
+    <div class="row">
+      <button class="primary" id="b-bouquet">💐 Envoyer un bouquet</button>
+      <button id="b-date">📱 Proposer un date</button>
+    </div>
+    <div class="panel" id="datepick" hidden>
+      <div id="ideas"></div>
+      <input type="text" id="customIdea" placeholder="Autre idée : cuisiner ensemble en appel…" maxlength="80">
+      <button id="sendCustom" style="margin-top:8px;text-align:center">Proposer cette idée</button>
+      <p class="err" id="dateErr"></p>
+    </div>
+    <h2>Derniers messages</h2>
+    <div id="feed"></div>
+    <p class="code" id="codeInfo"></p>
+  </section>
+
+  <section id="v-write" hidden>
+    <div class="seg" id="kindSeg" role="group" aria-label="Type de message">
+      <button data-k="wish" aria-pressed="true">J’aimerais…</button>
+      <button data-k="grievance" aria-pressed="false">Avec douceur…</button>
+    </div>
+    <label for="writeText" class="muted" id="writeLabel"></label>
+    <textarea id="writeText" maxlength="280"></textarea>
+    <p class="err" id="writeErr"></p>
+    <button class="primary" id="sendWrite" style="width:100%;margin-top:10px">Envoyer</button>
+  </section>
+
+  <section id="v-mood" hidden>
+    <h2 style="margin-top:0">Comment tu te sens aujourd’hui ?</h2>
+    <div class="moods" id="moods"></div>
+    <label for="moodText" class="muted">Dis-lui pourquoi (seul(e) lui/elle le verra)</label>
+    <textarea id="moodText" maxlength="280"></textarea>
+    <p class="err" id="moodErr"></p>
+    <button class="primary" id="sendMood" style="width:100%;margin-top:10px" disabled>Envoyer</button>
+  </section>
+
+  <nav>
+    <button data-tab="home" aria-current="page"><span>💛</span>Nous</button>
+    <button data-tab="write"><span>✍️</span>Écrire</button>
+    <button data-tab="mood"><span>🙂</span>Humeur</button>
+  </nav>
+</main>
+<div id="toast" role="status"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, setDoc, updateDoc, onSnapshot, query, orderBy, limit, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ====== À REMPLACER : Firebase > Paramètres du projet > Vos applications > Web (</>) ====== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDV4-fHCK5RWR9lUcqwpmibo2n6A9OWCGo",
+  authDomain: "nousdeux-7915c.firebaseapp.com",
+  projectId: "nousdeux-7915c",
+  appId: "1:726911335726:web:8d9852ebd8606c8b764ebf"
+};
+/* ========================================================================================== */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const PERSONS = { Noah: { il: "il", partner: "Emy" }, Emy: { il: "elle", partner: "Noah" } };
+const MOODS = [
+  ["😊","heureux","heureuse"],["😌","serein","sereine"],["🥱","fatigué","fatiguée"],
+  ["😟","stressé","stressée"],["😢","triste","triste"],["🥺","en manque de toi","en manque de toi"]
+];
+const CARE = ["fatigué","fatiguée","stressé","stressée","triste","en manque de toi"];
+const IDEAS = ["Date FaceTime 📱","Plato 🎲","Questions-réponses 💬","Film en simultané 🎬",
+  "Série en simultané 📺","Jeu en ligne 🎮","Dîner en FaceTime 🍝","Balade en appel 🚶"];
+const BANNED = ["connard","connasse","con","conne","salope","pute","putain","merde","debile","idiot","idiote",
+  "imbecile","stupide","abruti","abrutie","cretin","cretine","encule","fdp","ntm","batard","bouffon",
+  "ta gueule","ferme ta gueule","degage","je te hais","tg","pd","chiante","chiant"];
+const HINT = "Reformule avec douceur 💛 (pas d’insultes ni de mots blessants)";
+const gentle = s => {
+  const words = s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().split(/[^a-z]+/).filter(Boolean);
+  const n = " " + words.join(" ") + " ";
+  return !BANNED.some(b => n.includes(" " + b + " "));
+};
+
+let me = localStorage.getItem("me"), code = localStorage.getItem("code");
+let events = [], unsub = null, db = null, tab = "home", kind = "wish", mood = null, pick = "Noah";
+
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2200); }
+
+function body(e){
+  const il = PERSONS[e.from]?.il ?? "il";
+  const q = e.text ? ` : « ${e.text} »` : "";
+  switch(e.kind){
+    case "wish": return `aimerait${q}`;
+    case "grievance": return `a besoin de te dire avec douceur${q}`;
+    case "bouquet": return `t’a envoyé un bouquet 💐 — ${il} pense à toi`;
+    case "mood": return `se sent ${e.extra ?? ""}${q}`;
+    case "dateProposal": return `te propose un date : ${e.extra ?? ""}`;
+  }
+  return "";
+}
+
+/* ---------- Firebase ---------- */
+async function start(){
+  if (false) {
+    $("#app").insertAdjacentHTML("afterbegin",'<div class="notice">Configuration Firebase manquante : remplace les valeurs COLLE_ICI dans index.html.</div>');
+    return;
+  }
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  await signInAnonymously(getAuth(app));
+  unsub?.();
+  unsub = onSnapshot(
+    query(collection(db,"couples",code,"events"), orderBy("createdAt","desc"), limit(50)),
+    snap => {
+      events = snap.docs.map(d => { const x = d.data(); return { id:d.id, ...x, at: x.createdAt?.toDate?.() ?? new Date() }; });
+      renderFeed();
+    },
+    err => toast("Connexion impossible : " + err.code)
+  );
+}
+
+async function send(k, text = "", extra = null){
+  await addDoc(collection(db,"couples",code,"events"), {
+    from: me, kind: k, text, extra, status: k === "dateProposal" ? "pending" : "info", createdAt: serverTimestamp()
+  });
+}
+const respond = (id, accept) => updateDoc(doc(db,"couples",code,"events",id), { status: accept ? "accepted" : "declined" });
+
+/* ---------- Écrans ---------- */
+function showApp(){
+  $("#onboarding").hidden = true; $("#app").hidden = false;
+  $("#title").textContent = `${me} 💛 ${PERSONS[me].partner}`;
+  $("#codeInfo").textContent = `Code de votre espace : ${code}`;
+  $("#ideas").innerHTML = IDEAS.map(i => `<button data-idea="${esc(i)}">${esc(i)}</button>`).join("");
+  $("#moods").innerHTML = MOODS.map((m,i) => `<button data-mood="${i}" aria-pressed="false"><span>${m[0]}</span>${esc(me==="Noah"?m[1]:m[2])}</button>`).join("");
+  setTab("home"); setKind("wish");
+  start();
+}
+
+function setTab(t){
+  tab = t;
+  for (const id of ["home","write","mood"]) $("#v-"+id).hidden = id !== t;
+  document.querySelectorAll("nav button").forEach(b => { if (b.dataset.tab === t) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+}
+
+function setKind(k){
+  kind = k;
+  document.querySelectorAll("#kindSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === k));
+  $("#writeLabel").textContent = k === "wish" ? "Ce que j’aimerais" : "Ce qui m’a fait de la peine, et ce qui m’aiderait";
+}
+
+function mine_body(e){
+  const q = e.text ? ` « ${e.text} »` : "";
+  switch(e.kind){
+    case "wish": return `Tu as écrit :${q}`;
+    case "grievance": return `Tu as écrit avec douceur :${q}`;
+    case "bouquet": return "Tu as envoyé un bouquet 💐";
+    case "mood": return `Tu te sens ${e.extra ?? ""}${q ? " :" + q : ""}`;
+    case "dateProposal": return `Tu as proposé : ${e.extra ?? ""}`;
+  }
+  return "";
+}
+
+function renderFeed(){
+  const today = new Date().toDateString();
+  const t = events.find(e => e.kind==="dateProposal" && e.status==="accepted" && e.at.toDateString()===today);
+  $("#tonight").innerHTML = t
+    ? `<div class="tonight">Rendez-vous ce soir avec ${esc(t.from===me ? PERSONS[me].partner : t.from)} pour ${esc(t.extra)}</div>` : "";
+  const lastMood = events.find(e => e.kind==="mood" && e.from!==me);
+  $("#feed").innerHTML = events.length ? events.map(e => {
+    const mine = e.from === me;
+    let extra = "";
+    if (e.kind === "dateProposal") {
+      if (e.status === "pending" && !mine) extra = `<div class="actions"><button class="primary" data-act="yes" data-id="${e.id}">Accepter 💛</button><button data-act="no" data-id="${e.id}">Pas ce soir</button></div>`;
+      else if (e.status === "pending") extra = `<div class="state muted">En attente de réponse…</div>`;
+      else if (e.status === "accepted") extra = `<div class="state ok">Accepté ✅</div>`;
+      else extra = `<div class="state muted">Pas pour ce soir, une autre fois 💛</div>`;
+    }
+    if (lastMood && e.id === lastMood.id && CARE.includes(e.extra)) extra += `<div class="actions"><button data-act="date">Proposer un date ce soir ?</button></div>`;
+    const who = mine ? "Toi" : esc(e.from);
+    return `<div class="item ${mine?"mine":""}"><div class="who">${who} · ${e.at.toLocaleString("fr-FR",{weekday:"short",hour:"2-digit",minute:"2-digit"})}</div>
+      <div class="msg">${esc(mine ? mine_body(e) : body(e))}</div>${extra}</div>`;
+  }).join("") : `<p class="muted">Rien pour l’instant. Envoie un bouquet pour commencer 💐</p>`;
+}
+
+/* ---------- Événements ---------- */
+$("#who").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return; pick = b.dataset.p;
+  document.querySelectorAll("#who button").forEach(x => x.setAttribute("aria-pressed", x === b));
+});
+function enter(c){ me = pick; code = c.toUpperCase(); localStorage.setItem("me", me); localStorage.setItem("code", code); showApp(); }
+$("#create").onclick = async () => {
+  const L = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let c = "";
+  for (let i=0;i<6;i++) c += L[Math.floor(Math.random()*L.length)];
+  enter(c);
+  if (db) { try { await setDoc(doc(db,"couples",c), { created: serverTimestamp() }, { merge:true }); } catch(e){} }
+};
+$("#join").onclick = () => {
+  const c = $("#joinCode").value.trim();
+  if (c.length !== 6) { $("#obErr").textContent = "Le code a 6 caractères."; return; }
+  enter(c);
+};
+document.querySelector("nav").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setTab(b.dataset.tab); });
+$("#b-bouquet").onclick = async () => { try { await send("bouquet"); toast("Bouquet envoyé 💐"); } catch(e){ toast("Envoi impossible"); } };
+$("#b-date").onclick = () => { $("#datepick").hidden = !$("#datepick").hidden; };
+$("#ideas").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  try { await send("dateProposal","",b.dataset.idea); $("#datepick").hidden = true; toast("Proposition envoyée 📱"); } catch(x){ toast("Envoi impossible"); }
+});
+$("#sendCustom").onclick = async () => {
+  const v = $("#customIdea").value.trim(); if (!v) return;
+  if (!gentle(v)) { $("#dateErr").textContent = HINT; return; }
+  $("#dateErr").textContent = "";
+  try { await send("dateProposal","",v); $("#customIdea").value=""; $("#datepick").hidden = true; toast("Proposition envoyée 📱"); } catch(x){ toast("Envoi impossible"); }
+};
+$("#feed").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.act === "date") { $("#datepick").hidden = false; setTab("home"); scrollTo({top:0,behavior:"smooth"}); return; }
+  try { await respond(b.dataset.id, b.dataset.act === "yes"); } catch(x){ toast("Action impossible"); }
+});
+$("#kindSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setKind(b.dataset.k); });
+$("#sendWrite").onclick = async () => {
+  const t = $("#writeText").value.trim(); if (!t) return;
+  if (!gentle(t)) { $("#writeErr").textContent = HINT; return; }
+  $("#writeErr").textContent = "";
+  try { await send(kind, t); $("#writeText").value = ""; toast("Envoyé 💛"); setTab("home"); } catch(x){ toast("Envoi impossible"); }
+};
+$("#moods").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return; mood = Number(b.dataset.mood);
+  document.querySelectorAll("#moods button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  $("#sendMood").disabled = false;
+});
+$("#sendMood").onclick = async () => {
+  if (mood === null) return;
+  const t = $("#moodText").value.trim();
+  if (!gentle(t)) { $("#moodErr").textContent = HINT; return; }
+  $("#moodErr").textContent = "";
+  const m = MOODS[mood];
+  try { await send("mood", t, me === "Noah" ? m[1] : m[2]); $("#moodText").value = ""; mood = null;
+    document.querySelectorAll("#moods button").forEach(x => x.setAttribute("aria-pressed","false"));
+    $("#sendMood").disabled = true; toast("Envoyé 💛"); setTab("home"); } catch(x){ toast("Envoi impossible"); }
+};
+
+/* ---------- Démarrage ---------- */
+if (me && code) showApp(); else $("#onboarding").hidden = false;
+</script>
+</body>
+</html>
