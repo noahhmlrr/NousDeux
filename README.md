@@ -3,7 +3,7 @@
 ## 1. Notifications push gratuites
 Le dépôt est public : GitHub Actions utilise gratuitement les runners standards des dépôts publics. Les notifications sont vérifiées toutes les 5 minutes (GitHub peut parfois retarder un lancement). Firebase Cloud Messaging et le forfait Spark restent utilisés; aucune Cloud Function ni activation Blaze n’est nécessaire. Pour éviter tout frais, confirme que le projet Firebase est bien au forfait Spark. Si tu as déjà déployé les anciennes Cloud Functions, supprime-les dans Firebase Console avant de repasser à Spark. Firestore reste soumis aux quotas gratuits Spark; au-delà, les requêtes gratuites sont bloquées.
 
-1. `index.html` et `firebase-messaging-sw.js` contiennent déjà la configuration Firebase. Dans Firebase Console > ⚙️ Paramètres du projet > **Cloud Messaging** > **Configuration Web** > **Certificats Web Push**, génère une paire de clés et copie la clé publique dans `VAPID_KEY` dans `index.html`. Si nécessaire, active l’API **FCM Registration** dans Google Cloud Console.
+1. `index.html` et `firebase-messaging-sw.js` contiennent la configuration Firebase; la clé publique VAPID du projet est déjà configurée dans `index.html`. Ne la régénère pas sans remplacer aussi `VAPID_KEY` et republier l’application. Si nécessaire, active l’API **FCM Registration** dans Google Cloud Console.
 2. Dans Google Cloud Console > **IAM et administration > Comptes de service**, crée un compte dédié à ce poller et donne-lui les rôles **Firebase Cloud Messaging API Admin** et **Cloud Datastore User**. Crée une clé JSON pour ce compte.
 3. Dans GitHub > dépôt > **Settings > Secrets and variables > Actions**, ajoute deux *secrets* :
    - `FIREBASE_SERVICE_ACCOUNT` : le contenu JSON complet de la clé.
