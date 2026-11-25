@@ -32,6 +32,7 @@ h2{font-size:1rem;margin:26px 0 10px;color:var(--muted);font-weight:600}
 button,input,textarea{font:inherit;color:inherit}
 button{border:0;border-radius:14px;padding:12px 16px;background:var(--soft);cursor:pointer;min-height:44px}
 button.primary{background:var(--accent);color:var(--accent-ink);font-weight:600}
+button.leave{width:100%;margin-top:12px;background:transparent;color:var(--err);border:1px solid var(--err)}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 textarea,input[type=text]{width:100%;border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:12px;resize:vertical}
 textarea{min-height:120px}
@@ -100,6 +101,7 @@ nav span{font-size:1.4rem}
     <h2>Derniers messages</h2>
     <div id="feed"></div>
     <p class="code" id="codeInfo"></p>
+    <button class="leave" id="leave">Quitter cet espace</button>
   </section>
 
   <section id="v-write" hidden>
@@ -168,7 +170,8 @@ const gentle = s => {
 
 let me = normalizePerson(localStorage.getItem("me")), code = localStorage.getItem("code");
 let displayName = "", coupleNames = {};
-let events = [], unsub = null, unsubCouple = null, db = null, tab = "home", kind = "wish", mood = null, pick = me || "Noah";
+let events = [], unsub = null, unsubCouple = null, firebaseApp = null, db = null, sessionGeneration = 0;
+let tab = "home", kind = "wish", mood = null, pick = me || "Noah";
 
 function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2200); }
 
@@ -191,15 +194,19 @@ async function start(){
     $("#app").insertAdjacentHTML("afterbegin",'<div class="notice">Configuration Firebase manquante : remplace les valeurs COLLE_ICI dans index.html.</div>');
     return;
   }
-  const app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  await signInAnonymously(getAuth(app));
+  const generation = sessionGeneration;
+  firebaseApp ??= initializeApp(firebaseConfig);
+  db = getFirestore(firebaseApp);
+  const auth = getAuth(firebaseApp);
+  if (!auth.currentUser) await signInAnonymously(auth);
+  if (generation !== sessionGeneration || !code) return;
   const coupleRef = doc(db,"couples",code);
   try {
     await setDoc(coupleRef, { names: { [me]: displayName } }, { merge:true });
   } catch(e) {
     toast("Impossible d’enregistrer le prénom : " + e.code);
   }
+  if (generation !== sessionGeneration || !code) return;
   unsubCouple?.();
   unsubCouple = onSnapshot(coupleRef, snap => {
     coupleNames = snap.data()?.names ?? {};
@@ -293,11 +300,36 @@ $("#who").addEventListener("click", e => {
   $("#privateName").value = localStorage.getItem("displayName:" + pick) || "";
 });
 function enter(c, name){
+  sessionGeneration++;
   me = pick; displayName = name; code = c.toUpperCase();
   localStorage.setItem("me", me); localStorage.setItem("code", code);
   localStorage.setItem("displayName:" + me, displayName);
   showApp();
 }
+$("#leave").onclick = () => {
+  if (!confirm("Quitter cet espace sur cet appareil ? Les messages et l’espace partagé ne seront pas supprimés.")) return;
+  unsub?.(); unsub = null;
+  unsubCouple?.(); unsubCouple = null;
+  sessionGeneration++;
+  localStorage.removeItem("me");
+  localStorage.removeItem("code");
+  localStorage.removeItem("displayName:" + me);
+  me = null; code = null; displayName = ""; coupleNames = {}; events = [];
+  $("#app").hidden = true;
+  $("#onboarding").hidden = false;
+  $("#privateName").value = "";
+  $("#joinCode").value = "";
+  $("#obErr").textContent = "";
+  $("#create").textContent = "Créer notre espace";
+  $("#createHint").textContent = "Un code s’affichera : donne-le à l’autre personne.";
+  document.querySelectorAll("#who button").forEach(b => {
+    b.disabled = false;
+    b.setAttribute("aria-pressed", b.dataset.p === pick);
+  });
+  $("#joinHeading").hidden = false;
+  $("#joinCode").hidden = false;
+  $("#join").hidden = false;
+};
 function getPrivateName(){
   const name = $("#privateName").value.trim();
   if (!name) { $("#obErr").textContent = "Entre le prénom à afficher dans votre espace privé."; return ""; }
