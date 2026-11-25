@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Nous deux">
 <meta name="theme-color" content="#fbf3f6">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="./manifest.webmanifest">
 <title>Nous deux ❤️</title>
 <style>
 :root{
@@ -101,6 +102,11 @@ nav span{font-size:1.4rem}
     <h2>Derniers messages</h2>
     <div id="feed"></div>
     <p class="code" id="codeInfo"></p>
+    <div class="panel" id="pushPanel">
+      <h2>Notifications</h2>
+      <p class="muted" id="pushStatus">Vérification de la compatibilité…</p>
+      <button class="primary" id="enablePush" disabled>Activer les notifications</button>
+    </div>
     <button class="leave" id="leave">Quitter cet espace</button>
   </section>
 
@@ -135,16 +141,20 @@ nav span{font-size:1.4rem}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, setDoc, updateDoc, onSnapshot, query, orderBy, limit, serverTimestamp }
+import { getFirestore, collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, limit, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getMessaging, getToken, deleteToken, isSupported, onMessage }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
 
 /* ====== À REMPLACER : Firebase > Paramètres du projet > Vos applications > Web (</>) ====== */
 const firebaseConfig = {
   apiKey: "AIzaSyDV4-fHCK5RWR9lUcqwpmibo2n6A9OWCGo",
   authDomain: "nousdeux-7915c.firebaseapp.com",
   projectId: "nousdeux-7915c",
+  messagingSenderId: "726911335726",
   appId: "1:726911335726:web:8d9852ebd8606c8b764ebf"
 };
+const VAPID_KEY = "COLLE_LA_CLE_WEB_PUSH_ICI";
 /* ========================================================================================== */
 
 const $ = s => document.querySelector(s);
@@ -171,6 +181,7 @@ const gentle = s => {
 let me = normalizePerson(localStorage.getItem("me")), code = localStorage.getItem("code");
 let displayName = "", coupleNames = {};
 let events = [], unsub = null, unsubCouple = null, firebaseApp = null, db = null, sessionGeneration = 0;
+let messaging = null, pushSupported = false, pushRegistered = false, pushListener = null, pushDeviceId = null;
 let tab = "home", kind = "wish", mood = null, pick = me || "Noah";
 
 function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2200); }
@@ -189,6 +200,79 @@ function body(e){
 }
 
 /* ---------- Firebase ---------- */
+function updatePushStatus(){
+  const button = $("#enablePush");
+  const status = $("#pushStatus");
+  const hasVapidKey = VAPID_KEY && VAPID_KEY !== "COLLE_LA_CLE_WEB_PUSH_ICI";
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+
+  if (!hasVapidKey) {
+    status.textContent = "Configuration requise : ajoute la clé Web Push Firebase dans index.html.";
+    button.disabled = true;
+  } else if (!pushSupported) {
+    status.textContent = "Les notifications ne sont pas prises en charge par ce navigateur.";
+    button.disabled = true;
+  } else if (isIos && !isStandalone) {
+    status.textContent = "Sur iPhone/iPad, ajoute d’abord l’app à l’écran d’accueil et ouvre son icône.";
+    button.disabled = true;
+  } else if (Notification.permission === "denied") {
+    status.textContent = "Les notifications sont bloquées dans les réglages de ce navigateur.";
+    button.disabled = true;
+  } else if (pushRegistered) {
+    status.textContent = "Les notifications sont activées sur cet appareil.";
+    button.textContent = "Notifications activées";
+    button.disabled = true;
+  } else {
+    status.textContent = Notification.permission === "granted"
+      ? "Autorisation accordée. Termine l’activation."
+      : "Active les notifications pour être averti des nouveaux messages.";
+    button.textContent = Notification.permission === "granted" ? "Terminer l’activation" : "Activer les notifications";
+    button.disabled = false;
+  }
+}
+
+async function savePushDevice(){
+  const registration = await navigator.serviceWorker.register(
+    new URL("./firebase-messaging-sw.js", location.href),
+    { scope: new URL("./", location.href).pathname }
+  );
+  const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+  if (!token) throw new Error("Firebase n’a pas fourni de jeton de notification.");
+  const uid = getAuth(firebaseApp).currentUser?.uid;
+  if (!uid) throw new Error("La session Firebase est introuvable.");
+  await setDoc(doc(db,"couples",code,"devices",uid), {
+    token, role: me, updatedAt: serverTimestamp()
+  }, { merge:true });
+  pushDeviceId = uid;
+  pushRegistered = true;
+  updatePushStatus();
+}
+
+async function initializePush(generation){
+  try {
+    pushSupported = await isSupported();
+  } catch(e) {
+    $("#pushStatus").textContent = "Impossible de vérifier la compatibilité des notifications : " + e.message;
+    return;
+  }
+  if (generation !== sessionGeneration) return;
+  if (!pushSupported) { updatePushStatus(); return; }
+  messaging = getMessaging(firebaseApp);
+  pushListener?.();
+  pushListener = onMessage(messaging, payload => {
+    if (payload.data?.body) toast(payload.data.body);
+  });
+  updatePushStatus();
+  if (Notification.permission === "granted" && VAPID_KEY && VAPID_KEY !== "COLLE_LA_CLE_WEB_PUSH_ICI") {
+    try {
+      await savePushDevice();
+    } catch(e) {
+      $("#pushStatus").textContent = "Impossible d’enregistrer cet appareil : " + e.message;
+    }
+  }
+}
+
 async function start(){
   if (false) {
     $("#app").insertAdjacentHTML("afterbegin",'<div class="notice">Configuration Firebase manquante : remplace les valeurs COLLE_ICI dans index.html.</div>');
@@ -206,6 +290,8 @@ async function start(){
   } catch(e) {
     toast("Impossible d’enregistrer le prénom : " + e.code);
   }
+  if (generation !== sessionGeneration || !code) return;
+  await initializePush(generation);
   if (generation !== sessionGeneration || !code) return;
   unsubCouple?.();
   unsubCouple = onSnapshot(coupleRef, snap => {
@@ -299,6 +385,21 @@ $("#who").addEventListener("click", e => {
   document.querySelectorAll("#who button").forEach(x => x.setAttribute("aria-pressed", x === b));
   $("#privateName").value = localStorage.getItem("displayName:" + pick) || "";
 });
+$("#enablePush").onclick = async () => {
+  if (!pushSupported || !messaging) { updatePushStatus(); return; }
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  if (isIos && !isStandalone) { updatePushStatus(); return; }
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") { updatePushStatus(); return; }
+    await savePushDevice();
+    toast("Notifications activées ❤️");
+  } catch(e) {
+    $("#pushStatus").textContent = "Échec de l’activation : " + e.message;
+    toast("Activation des notifications impossible");
+  }
+};
 function enter(c, name){
   sessionGeneration++;
   me = pick; displayName = name; code = c.toUpperCase();
@@ -306,15 +407,32 @@ function enter(c, name){
   localStorage.setItem("displayName:" + me, displayName);
   showApp();
 }
-$("#leave").onclick = () => {
+$("#leave").onclick = async () => {
   if (!confirm("Quitter cet espace sur cet appareil ? Les messages et l’espace partagé ne seront pas supprimés.")) return;
+  let pushCleanupError = "";
+  if (messaging && pushRegistered) {
+    try {
+      await deleteToken(messaging);
+    } catch(e) {
+      pushCleanupError ||= e.message;
+    }
+  }
+  if (db && code && pushDeviceId) {
+    try {
+      await deleteDoc(doc(db,"couples",code,"devices",pushDeviceId));
+    } catch(e) {
+      pushCleanupError ||= e.message;
+    }
+  }
   unsub?.(); unsub = null;
   unsubCouple?.(); unsubCouple = null;
+  pushListener?.(); pushListener = null;
   sessionGeneration++;
   localStorage.removeItem("me");
   localStorage.removeItem("code");
   localStorage.removeItem("displayName:" + me);
   me = null; code = null; displayName = ""; coupleNames = {}; events = [];
+  messaging = null; pushSupported = false; pushRegistered = false; pushDeviceId = null;
   $("#app").hidden = true;
   $("#onboarding").hidden = false;
   $("#privateName").value = "";
@@ -329,6 +447,7 @@ $("#leave").onclick = () => {
   $("#joinHeading").hidden = false;
   $("#joinCode").hidden = false;
   $("#join").hidden = false;
+  if (pushCleanupError) toast("Espace quitté, appareil pas totalement retiré des notifications : " + pushCleanupError);
 };
 function getPrivateName(){
   const name = $("#privateName").value.trim();
