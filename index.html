@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#fbf3f6">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="./manifest.webmanifest">
-<title>Nous deux ❤️</title>
+<title>NousDeux ❤️</title>
 <style>
 :root{
   --bg:#fbf3f6; --card:#ffffff; --ink:#2a1d33; --muted:#85748f; --line:#ecdde5;
@@ -67,11 +67,11 @@ nav span{font-size:1.4rem}
 <body>
 
 <section id="onboarding" hidden>
-  <h1>Nous deux ❤️</h1>
+  <h1>NousDeux ❤️</h1>
   <p class="muted">Un petit coin à vous, pour vous dire les choses doucement.</p>
   <div class="seg" id="who" role="group" aria-label="Je suis">
-    <button data-p="Noah" aria-pressed="true">Je suis Noah</button>
-    <button data-p="Ally" aria-pressed="false">Je suis Ally</button>
+    <button data-p="Il" aria-pressed="true">Je suis Il</button>
+    <button data-p="Elle" aria-pressed="false">Je suis Elle</button>
   </div>
   <label for="privateName" class="muted">Ton prénom dans votre espace privé</label>
   <input type="text" id="privateName" placeholder="Le prénom que tu veux afficher" maxlength="32" autocomplete="given-name">
@@ -91,7 +91,7 @@ nav span{font-size:1.4rem}
     <div id="tonight"></div>
     <div class="row">
       <button class="primary" id="b-bouquet">💐 Envoyer un bouquet</button>
-      <button id="b-date"> Proposer un date</button>
+      <button id="b-date">👩‍❤️‍👨 Proposer un date</button>
     </div>
     <div class="panel" id="datepick" hidden>
       <div id="ideas"></div>
@@ -170,7 +170,7 @@ const IDEAS = ["Date FaceTime 📱","Plato 🎲","Questions-réponses 💬","Fil
   "Série en simultané 📺","Jeu en ligne 🎮","Dîner en FaceTime 🍝","Balade en appel 🚶"];
 const BANNED = ["connard","connasse","con","conne","salope","pute","putain","merde","debile","idiot","idiote",
   "imbecile","stupide","abruti","abrutie","cretin","cretine","encule","fdp","ntm","batard","bouffon",
-  "ta gueule","ferme ta gueule","degage","je te hais","tg","pd","chiante","chiant", "nique"];
+  "ta gueule","ferme ta gueule","degage","je te hais","tg","pd","chiante","chiant", "Nique"];
 const HINT = "Reformule avec douceur ❤️ (pas d’insultes ni de mots blessants)";
 const gentle = s => {
   const words = s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().split(/[^a-z]+/).filter(Boolean);
