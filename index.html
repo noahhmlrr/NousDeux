@@ -91,7 +91,7 @@ nav span{font-size:1.4rem}
     <div id="tonight"></div>
     <div class="row">
       <button class="primary" id="b-bouquet">💐 Envoyer un bouquet</button>
-      <button id="b-date">📱 Proposer un date</button>
+      <button id="b-date"> Proposer un date</button>
     </div>
     <div class="panel" id="datepick" hidden>
       <div id="ideas"></div>
@@ -113,7 +113,7 @@ nav span{font-size:1.4rem}
   <section id="v-write" hidden>
     <div class="seg" id="kindSeg" role="group" aria-label="Type de message">
       <button data-k="wish" aria-pressed="true">J’aimerais…</button>
-      <button data-k="grievance" aria-pressed="false">Avec douceur…</button>
+      <button data-k="grievance" aria-pressed="false">j'aurais aimé…</button>
     </div>
     <label for="writeText" class="muted" id="writeLabel"></label>
     <textarea id="writeText" maxlength="280"></textarea>
@@ -170,7 +170,7 @@ const IDEAS = ["Date FaceTime 📱","Plato 🎲","Questions-réponses 💬","Fil
   "Série en simultané 📺","Jeu en ligne 🎮","Dîner en FaceTime 🍝","Balade en appel 🚶"];
 const BANNED = ["connard","connasse","con","conne","salope","pute","putain","merde","debile","idiot","idiote",
   "imbecile","stupide","abruti","abrutie","cretin","cretine","encule","fdp","ntm","batard","bouffon",
-  "ta gueule","ferme ta gueule","degage","je te hais","tg","pd","chiante","chiant"];
+  "ta gueule","ferme ta gueule","degage","je te hais","tg","pd","chiante","chiant", "nique"];
 const HINT = "Reformule avec douceur ❤️ (pas d’insultes ni de mots blessants)";
 const gentle = s => {
   const words = s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().split(/[^a-z]+/).filter(Boolean);
